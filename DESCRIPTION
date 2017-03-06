@@ -1,0 +1,15 @@
+Package: HDMrP
+Title: Hierarchical and Dependent Mixture model for Risk Profiling
+Version: 0.0.0.9000
+Authors@R: c(person("Yajuan", "Si", email = "sophie2012@gmail.com", role = c("aut")),
+              person("Wenshuo", "Liu", email = "wenshuoliu@gmail.com", role = c("aut", "cre")))
+Description: Imputation ??
+Depends:
+    R (>= 3.3.0)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+LinkingTo: Rcpp
+Imports:
+    Rcpp
+RoxygenNote: 5.0.1
