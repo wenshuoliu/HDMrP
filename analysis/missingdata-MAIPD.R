@@ -285,14 +285,14 @@ for (t in 1:nrun){
    beta_new <- mvrnorm(1,beta[t-1,,k],diag(p3))
    }
    
-   prob_sum_nok<-0
+   prob_sum_nok_alpha<-0
    
    for (h in 1:K){
      if (h !=k){
        if (t==1){
-      prob_sum_nok <- prob_sum_nok + pi_k_fcn(beta_0[,h],alpha_0[,h])
+      prob_sum_nok_alpha <- prob_sum_nok_alpha + pi_k_fcn(beta_0[,h],alpha_0[,h])
        }else{
-       prob_sum_nok <- prob_sum_nok + pi_k_fcn(beta[t-1,,h],alpha[t-1,,h])
+       prob_sum_nok_alpha <- prob_sum_nok_alpha + pi_k_fcn(beta[t-1,,h],alpha[t-1,,h])
        }
      }
    }
@@ -316,15 +316,30 @@ for (t in 1:nrun){
      alpha[t,,k]<-alpha[t-1,,k]
    }
 
+  #update beta_k 
+   prob_sum_nok_beta<-0
+   
+   for (h in 1:K){
+     if (h !=k){
+       if (t==1){
+         prob_sum_nok_beta <- prob_sum_nok_beta + pi_k_fcn(beta_0[,h],alpha[t,,h])
+       }else{
+         prob_sum_nok_beta <- prob_sum_nok_beta + pi_k_fcn(beta[t-1,,h],alpha[t,,h])
+       }
+     }
+   }
+   
    if (t==1){
-     
+     beta_prob_ratio<-pi_k_fcn(beta_new, alpha[t,,k])^sum(C_i==k)*
+       (1-prob_sum_nok-pi_k_fcn(beta_new, alpha[t,,k]))^sum(C_i==K)/
+       (pi_k_fcn(beta_0,alpha[t,,k])^sum(C_i==k))/
+       pi_k_fcn(beta_0,alpha[t,,k])^sum(C_i==K)
    }else{
    beta_prob_ratio<-pi_k_fcn(beta_new, alpha[t,,k])^sum(C_i==k)*
      (1-prob_sum_nok-pi_k_fcn(beta_new, alpha[t,,k]))^sum(C_i==K)/
-     (pi_k_fcn(beta[t-1,,k],alpha[t,,k])^sum(C_i==k)*)/
+     (pi_k_fcn(beta[t-1,,k],alpha[t,,k])^sum(C_i==k))/
      pi_k_fcn(beta[t-1,,k],alpha[t,,k])^sum(C_i==K)
    }
-   
    
    if (runif(1)< min(beta_prob_ratio,1)){
      beta[t,,k]<-beta_new
