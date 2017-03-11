@@ -3,7 +3,7 @@
 ###Author: Yajuan Si
 setwd("/Users/Shared/ysi//boxsync//Box Sync/projects/meta-analysis/code/")
 ########################################################
-library(MASS); library(MCMCpack)
+library(MASS); #library(MCMCpack)
 
 set.seed(20170301)
 
@@ -99,13 +99,13 @@ N <- dim(data0)[1] #total sample size
 
 S<-length(unique(data0$study)) # #studies
 
-alpha_0 <- matrix(1,S,K); 
+alpha_0 <- matrix(0,S,K); 
 for (s in 1:S){
 alpha_0[s,1:(K-1)]<- seq(-s*0.1,0.5*s,length=K-1)
   #coefficients for studies
 }
 
-beta_0 <- matrix(1, p3, K); #coefficients for collected variable
+beta_0 <- matrix(0, p3, K); #coefficients for collected variable
 for (j in 1:p3){
   beta_0[j,1:(K-1)]<-seq(j,-0.5*j,length=K-1) 
 }
@@ -163,15 +163,15 @@ for (j1 in 1:p1){
     Y[i,j1]<-rnorm(1)* sigma_0[j1,C_index[i]] + X_matrix[i,]%*%theta_0[j1,1:d_j2,C_index[i]] + Z[i,]%*%theta_0[j1,d_j2+1:p3,C_index[i]]
   }
 }
-#missing data:simulation
-miss_ind_Y<-matrix(0,N,p1)
-miss_ind_X<-matrix(0,N,p2)
-for (j1 in 1:p1){
-  miss_ind_Y[,j1]<-(runif(N) <= 0.1)
-}
-for (j2 in 1:p2){
-  miss_ind_X[,j2]<-(runif(N) <= 0.1)
-}
+##missing data:simulation
+# miss_ind_Y<-matrix(0,N,p1)
+# miss_ind_X<-matrix(0,N,p2)
+# for (j1 in 1:p1){
+#   miss_ind_Y[,j1]<-(runif(N) <= 0.1)
+# }
+# for (j2 in 1:p2){
+#   miss_ind_X[,j2]<-(runif(N) <= 0.1)
+# }
 
 #----MCMC----#
 #-define function-#
@@ -195,9 +195,11 @@ psi<-array(0,c(eff.n,p2,d_j2,K));
 #for Y
 theta<-array(0,c(eff.n, p1, d_j2+p3, K));
 sigma<-array(1,c(eff.n, p1, K));
+
 #-temporary variables-#
 pi_k_x <- rep(1,N);
 pi_k_y <- rep(1,N); C_i <- rep(1,N);
+
 #-initial values-#
 beta[1,,]<-beta_0
 alpha[1,,]<-alpha_0
@@ -217,9 +219,11 @@ for (t in 1:nrun){
 
   #1) Update latent class indicator
   for (k in 1:k){
+    
+    pi_k<-exp(Z %*% beta[t,,k]+ S_i %*% alpha[t,,k])
+    
     for (i in 1:N){
-      pi_k<-exp(Z %*% beta[t,,k]+ S_i %*% alpha[t,,k])
-  
+
      pi_k_x[i]<-1
       for (j2 in 1:p2){
         pi_k_x[i]<-pi_k_x[i] * psi[t,j2,X[i,j2],k]
@@ -229,9 +233,11 @@ for (t in 1:nrun){
       for (j1 in 1:p1){
         pi_k_y[i]<-pi_k_y[i] * dnorm(Y[i,j1],X_matrix[i,]%*%theta[t,j1,1:d_j2,k]+ Z[i,]%*%theta[t,j1,d_j2+1:p3,k],sigma[t,j1,k])
       }
-  
-    C_prob[t,,k]<-pi_k * pi_k_x * pi_k_y
+
     }
+    
+    C_prob[t,,k]<-pi_k * pi_k_x * pi_k_y
+    
     C_prob[t,,] <- C_prob[t,,]/apply(C_prob[t,,],1,sum)
   }
 
@@ -294,14 +300,13 @@ for (t in 1:nrun){
    if (t==1){
     alpha_prob_ratio<-pi_k_fcn(beta_0,alpha_new)^sum(C_i==k)*
        (1-prob_sum_nok-pi_k_fcn(beta_0,alpha_new))^sum(C_i==K)/
-       (pi_k_fcn(beta_0,alpha_0)^sum(C_i==k)*)/
+       (pi_k_fcn(beta_0,alpha_0)^sum(C_i==k))/
        pi_k_fcn(beta_0,alpha_0)^sum(C_i==K)    
   
-    
    }else{
    alpha_prob_ratio<-pi_k_fcn(beta[t-1,,k],alpha_new)^sum(C_i==k)*
      (1-prob_sum_nok-pi_k_fcn(beta[t-1,,k],alpha_new))^sum(C_i==K)/
-     (pi_k_fcn(beta[t-1,,k],alpha[t-1,,k])^sum(C_i==k)*)/
+     (pi_k_fcn(beta[t-1,,k],alpha[t-1,,k])^sum(C_i==k))/
      pi_k_fcn(beta[t-1,,k],alpha[t-1,,k])^sum(C_i==K)
    
    }
